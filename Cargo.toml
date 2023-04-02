@@ -1,0 +1,33 @@
+[package]
+name = "mdbook-treesitter"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "mdbook-treesitter"
+path = "src/bin/mdbook-treesitter.rs"
+required-features = ["cli"]
+
+[lib]
+name = "mdbook_treesitter"
+path = "src/lib.rs"
+
+[dependencies]
+tree-sitter = "0.20"
+tree-sitter-highlight = "0.20.1"
+libloading = "0.7"
+anyhow = "1"
+html-escape = "0.2.13"
+map-macro = "0.2.5"
+clap = { version = "4.2.1", default_features = false, features = ["std", "derive"], optional = true }
+mdbook = "0.4.28"
+serde = { version = "1.0.159", features = ["derive"] }
+serde_json = "1.0.95"
+pulldown-cmark = "0.9.2"
+regex = "1.7.3"
+
+[features]
+default = ["cli"]
+
+# Enable the command line binary
+cli = ["clap"]
