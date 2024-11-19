@@ -15,22 +15,13 @@ pub struct MdbookTreesitterHighlighter {
 }
 
 impl MdbookTreesitterHighlighter {
-    pub fn new(info_string: &str) -> Result<Option<MdbookTreesitterHighlighter>> {
-        let s: Vec<&str> = info_string.split(" ").collect();
-        if s.len() != 2
-            || (s.len() == 2 && s.first().is_some() && *s.first().unwrap() != "treesitter")
-        {
-            return Ok(None);
-        }
+    pub fn new(codeblock_lang: &str) -> Result<Option<MdbookTreesitterHighlighter>> {
+        let language = MdbookTreesitterHighlighter::get_language(codeblock_lang)?;
 
-        let language = MdbookTreesitterHighlighter::get_language(s.get(1).unwrap())?;
-
-        let highlights_query =
-            MdbookTreesitterHighlighter::load_scm(s.get(1).unwrap(), "highlights")?;
-        let injection_query =
-            MdbookTreesitterHighlighter::load_scm(s.get(1).unwrap(), "injections")
-                .unwrap_or("".to_string());
-        let locals_query = MdbookTreesitterHighlighter::load_scm(s.get(1).unwrap(), "locals")
+        let highlights_query = MdbookTreesitterHighlighter::load_scm(codeblock_lang, "highlights")?;
+        let injection_query = MdbookTreesitterHighlighter::load_scm(codeblock_lang, "injections")
+            .unwrap_or("".to_string());
+        let locals_query = MdbookTreesitterHighlighter::load_scm(codeblock_lang, "locals")
             .unwrap_or("".to_string());
 
         let mut config = HighlightConfiguration::new(
