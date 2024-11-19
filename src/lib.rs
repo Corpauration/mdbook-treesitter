@@ -20,7 +20,6 @@ impl Preprocessor for MdbookTreesitter {
     }
 
     fn run(&self, ctx: &PreprocessorContext, mut book: Book) -> Result<Book> {
-        dbg!(&ctx);
         let mut res = None;
         book.for_each_mut(|item: &mut BookItem| {
             if let Some(Err(_)) = res {
