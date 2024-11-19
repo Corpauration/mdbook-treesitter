@@ -22,6 +22,7 @@ additional-js = ["treesitter.js"]
 
 [preprocessor.treesitter]
 command = "mdbook-treesitter"
+languages = ["javascript"]
 ```
 
 Add this javascript in the file `treesitter.js` at the root of your project:
@@ -38,7 +39,7 @@ for (let i = 0; i < t.length; i++) {
 Use usual codeblocks like that:
 
 ````markdown
-```treesitter javascript
+```javascript
 console.log(this.a + b + "c" + 4);
 ```
 ````
