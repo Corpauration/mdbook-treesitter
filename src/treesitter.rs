@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use libloading::{Library, Symbol};
 use map_macro::hash_map;
 use regex::Regex;
+use std::fmt::Write;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
@@ -81,13 +82,15 @@ impl MdbookTreesitterHighlighter {
             .replace_all(string, |captures: &regex::Captures| {
                 captures[1]
                     .split(',')
-                    .map(|language| {
-                        format!(
+                    .fold(String::new(), |mut output, language| {
+                        write!(
+                            output,
                             "\n{}\n",
                             MdbookTreesitterHighlighter::load_scm(language, name).unwrap()
                         )
+                        .unwrap();
+                        output
                     })
-                    .collect::<String>()
             })
             .to_string())
     }
