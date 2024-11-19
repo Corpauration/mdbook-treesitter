@@ -23,9 +23,9 @@ enum Commands {
 fn main() {
     let cli = Cli::parse();
     if let Err(error) = run(cli) {
-        eprintln!("Fatal error: {}", error);
+        eprintln!("Fatal error: {error}");
         for error in error.chain() {
-            eprintln!("  - {}", error);
+            eprintln!("  - {error}");
         }
         process::exit(1);
     }
