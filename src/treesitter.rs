@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use libloading::{Library, Symbol};
-use map_macro::map;
+use map_macro::hash_map;
 use regex::Regex;
 use std::fs::File;
 use std::io::Read;
@@ -17,7 +17,7 @@ impl MdbookTreesitterHighlighter {
     pub fn new(info_string: &str) -> Result<Option<MdbookTreesitterHighlighter>> {
         let s: Vec<&str> = info_string.split(" ").collect();
         if s.len() != 2
-            || (s.len() == 2 && s.get(0).is_some() && s.get(0).unwrap().to_string() != "treesitter")
+            || (s.len() == 2 && s.first().is_some() && *s.first().unwrap() != "treesitter")
         {
             return Ok(None);
         }
@@ -78,7 +78,7 @@ impl MdbookTreesitterHighlighter {
         )?
         .read_to_string(string)?;
         Ok(regex
-            .replace_all(&string, |captures: &regex::Captures| {
+            .replace_all(string, |captures: &regex::Captures| {
                 captures[1]
                     .split(',')
                     .map(|language| {
@@ -142,7 +142,7 @@ impl MdbookTreesitterHighlighter {
     }
 
     pub fn html(&mut self, s: &str) -> Result<String> {
-        let map = map! {
+        let map = hash_map! {
             "type" => "hljs-type",
             "constructor" => "hljs-title function_",
             "constant" => "hljs-variable constant_",
