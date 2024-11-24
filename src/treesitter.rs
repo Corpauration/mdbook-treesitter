@@ -30,8 +30,7 @@ impl MdbookTreesitterHighlighter {
             &highlights_query,
             &injection_query,
             &locals_query,
-        )
-        .unwrap();
+        )?;
 
         config.configure(MdbookTreesitterHighlighter::highlight_names());
 
@@ -175,13 +174,12 @@ impl MdbookTreesitterHighlighter {
 
         let highlights = self
             .highlighter
-            .highlight(&self.config, s.as_bytes(), None, |_| None)
-            .unwrap();
+            .highlight(&self.config, s.as_bytes(), None, |_| None)?;
 
         let mut result = "```treesitter\n".to_string();
 
         for event in highlights {
-            match event.unwrap() {
+            match event? {
                 HighlightEvent::Source { start, end } => {
                     let code_span =
                         html_escape::encode_text(s.get(start..end).unwrap()).to_string();
