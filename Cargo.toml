@@ -3,7 +3,7 @@ name = "mdbook-treesitter"
 description = "mdbook-treesitter is an mdBook preprocessor for html adding tree-sitter highlighting support."
 homepage = "https://github.com/Corpauration/mdbook-treesitter"
 repository = "https://github.com/Corpauration/mdbook-treesitter"
-version = "0.1.1"
+version = "1.0.0"
 edition = "2021"
 license = "MIT"
 
