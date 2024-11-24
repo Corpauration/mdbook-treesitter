@@ -97,6 +97,8 @@ impl MdbookTreesitterHighlighter {
             "string",
             "string.regexp",
             "string.special",
+            "string.escape",
+            "escape",
             "comment",
             "variable",
             "variable.parameter",
@@ -132,6 +134,7 @@ impl MdbookTreesitterHighlighter {
             "diff.plus",
             "diff.minus",
             "diff.delta",
+            "number"
         ]
     }
 
@@ -146,6 +149,8 @@ impl MdbookTreesitterHighlighter {
             "string" => "hljs-string",
             "string.regexp" => "hljs-regexp",
             "string.special" => "hljs-string",
+            "string.escape" => "hljs-char escape_",
+            "escape" => "hljs-char escape_",
             "comment" => "hljs-comment",
             "variable" => "hljs-variable",
             "variable.parameter" => "hljs-params",
@@ -164,6 +169,7 @@ impl MdbookTreesitterHighlighter {
             "attribute" => "hljs-attribute",
             "namespace" => "hljs-title class_",
             "special" => "hljs-literal",
+            "number" => "hljs-number",
         };
 
         let highlights = self
