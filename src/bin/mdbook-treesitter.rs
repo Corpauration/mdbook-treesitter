@@ -1,10 +1,14 @@
 use anyhow::Result;
+use chrono::Local;
 use clap::{Parser, Subcommand};
+use env_logger::Builder;
+use log::LevelFilter;
 use mdbook::{
     errors::Error,
     preprocess::{CmdPreprocessor, Preprocessor},
 };
 use mdbook_treesitter::MdbookTreesitter;
+use std::io::Write;
 use std::{io, process};
 
 #[derive(Parser)]
@@ -21,6 +25,8 @@ enum Commands {
 }
 
 fn main() {
+    init_logger();
+
     let cli = Cli::parse();
     if let Err(error) = run(cli) {
         eprintln!("Fatal error: {error}");
@@ -67,4 +73,26 @@ fn handle_supports(renderer: String) -> ! {
     } else {
         process::exit(1);
     }
+}
+
+fn init_logger() {
+    let mut builder = Builder::new();
+
+    builder.format(|formatter, record| {
+        writeln!(
+            formatter,
+            "{} [{}] ({}): {}",
+            Local::now().format("%Y-%m-%d %H:%M:%S"),
+            record.level(),
+            record.target(),
+            record.args()
+        )
+    });
+
+    match std::env::var("RUST_LOG") {
+        Ok(var) => builder.parse_filters(&var),
+        Err(_) => builder.filter(None, LevelFilter::Info),
+    };
+
+    builder.init();
 }

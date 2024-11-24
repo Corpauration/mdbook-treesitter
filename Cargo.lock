@@ -1139,9 +1139,12 @@ name = "mdbook-treesitter"
 version = "0.1.1"
 dependencies = [
  "anyhow",
+ "chrono",
  "clap",
+ "env_logger",
  "html-escape",
  "libloading",
+ "log",
  "map-macro",
  "mdbook",
  "pulldown-cmark 0.12.2",

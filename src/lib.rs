@@ -2,12 +2,14 @@ mod treesitter;
 
 use crate::treesitter::MdbookTreesitterHighlighter;
 use anyhow::anyhow;
+use log::{debug, error};
 use mdbook::book::Book;
 use mdbook::errors::Result;
 use mdbook::preprocess::{Preprocessor, PreprocessorContext};
 use mdbook::BookItem;
 use pulldown_cmark::CodeBlockKind::Fenced;
 use pulldown_cmark::{Event, Options, Parser, Tag};
+use std::process::exit;
 
 pub struct MdbookTreesitter;
 
@@ -20,20 +22,21 @@ impl Preprocessor for MdbookTreesitter {
     }
 
     fn run(&self, ctx: &PreprocessorContext, mut book: Book) -> Result<Book> {
-        let mut res = None;
         book.for_each_mut(|item: &mut BookItem| {
-            if let Some(Err(_)) = res {
-                return;
-            }
-
             if let BookItem::Chapter(ref mut chapter) = *item {
-                res = Some(Self::preprocess(ctx, &chapter.content).map(|md| {
-                    chapter.content = md;
-                }));
+                if Self::preprocess(ctx, &chapter.content)
+                    .map(|md| {
+                        chapter.content = md;
+                    })
+                    .map_err(|err| error!("Failed to preprocess chapter: {err}"))
+                    .is_err()
+                {
+                    exit(1);
+                }
             }
         });
 
-        res.unwrap_or(Ok(())).map(|_| book)
+        Ok(book)
     }
 
     fn supports_renderer(&self, renderer: &str) -> bool {
@@ -67,14 +70,14 @@ impl MdbookTreesitter {
                 )
             })?;
 
-        let ty_err = "'languages' key must be a list of strings";
-        let languages: Vec<_> = languages
+        let ty_err = || anyhow!("preprocessor.{PREPROCESSOR}.languages must be a list of strings");
+        let languages: Result<Vec<_>> = languages
             .as_array()
-            .expect(ty_err)
+            .ok_or(ty_err())?
             .iter()
-            .map(|v| v.as_str().expect(ty_err))
+            .map(|v| v.as_str().ok_or(ty_err()))
             .collect();
-        Ok(languages)
+        languages
     }
     fn parse_code(
         cfg_languages: &[&str],
@@ -90,6 +93,8 @@ impl MdbookTreesitter {
         if !cfg_languages.contains(&info_string.as_str()) {
             return None;
         }
+
+        debug!("Code block with `{info_string}` language detected");
 
         let mut highlighter = match MdbookTreesitterHighlighter::new(info_string.as_str()) {
             Ok(h) => h?,
@@ -119,8 +124,7 @@ impl MdbookTreesitter {
                     match Self::parse_code(&cfg_languages, info_string.to_string(), span_content) {
                         Some(html) => html,
                         None => continue,
-                    };
-                let html = html?;
+                    }?;
                 code_blocks.push((span, html));
             }
         }

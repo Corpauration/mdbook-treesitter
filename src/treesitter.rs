@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use libloading::{Library, Symbol};
 use map_macro::hash_map;
 use regex::Regex;
@@ -19,10 +19,10 @@ impl MdbookTreesitterHighlighter {
         let language = MdbookTreesitterHighlighter::get_language(codeblock_lang)?;
 
         let highlights_query = MdbookTreesitterHighlighter::load_scm(codeblock_lang, "highlights")?;
-        let injection_query = MdbookTreesitterHighlighter::load_scm(codeblock_lang, "injections")
-            .unwrap_or("".to_string());
-        let locals_query = MdbookTreesitterHighlighter::load_scm(codeblock_lang, "locals")
-            .unwrap_or("".to_string());
+        let injection_query =
+            MdbookTreesitterHighlighter::load_scm(codeblock_lang, "injections").unwrap_or_default();
+        let locals_query =
+            MdbookTreesitterHighlighter::load_scm(codeblock_lang, "locals").unwrap_or_default();
 
         let mut config = HighlightConfiguration::new(
             language,
@@ -134,7 +134,7 @@ impl MdbookTreesitterHighlighter {
             "diff.plus",
             "diff.minus",
             "diff.delta",
-            "number"
+            "number",
         ]
     }
 
@@ -186,13 +186,16 @@ impl MdbookTreesitterHighlighter {
                     result.push_str(&code_span);
                 }
                 HighlightEvent::HighlightStart(s) => {
-                    let name = map
-                        .get(
-                            MdbookTreesitterHighlighter::highlight_names()
-                                .get(s.0)
-                                .unwrap(),
-                        )
-                        .unwrap();
+                    let highlight = MdbookTreesitterHighlighter::highlight_names()
+                        .get(s.0)
+                        .ok_or(anyhow!(
+                            "no highlight name found for highlight index {}",
+                            s.0
+                        ))?;
+                    let name = map.get(highlight).ok_or(anyhow!(
+                        "no highlightjs match found for highlight `{}`",
+                        highlight
+                    ))?;
                     result.push_str(&format!("<span class='{}'>", name));
                 }
                 HighlightEvent::HighlightEnd => {
