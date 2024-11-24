@@ -17,18 +17,18 @@ name = "mdbook_treesitter"
 path = "src/lib.rs"
 
 [dependencies]
-tree-sitter = "0.20"
-tree-sitter-highlight = "0.20.1"
-libloading = "0.7"
+tree-sitter = "0.24.4"
+tree-sitter-highlight = "0.24.4"
+libloading = "0.8.5"
 anyhow = "1"
 html-escape = "0.2.13"
-map-macro = "0.2.5"
-clap = { version = "4.2.1", default-features = false, features = ["std", "derive"], optional = true }
+map-macro = "0.3.0"
+clap = { version = "4.5.21", default-features = false, features = ["std", "derive"], optional = true }
 mdbook = "0.4.28"
-serde = { version = "1.0.159", features = ["derive"] }
-serde_json = "1.0.95"
-pulldown-cmark = "0.9.2"
-regex = "1.7.3"
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = "1.0.133"
+pulldown-cmark = "0.12.2"
+regex = "1.11.1"
 
 [features]
 default = ["cli"]

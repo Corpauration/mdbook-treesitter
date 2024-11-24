@@ -26,6 +26,7 @@ impl MdbookTreesitterHighlighter {
 
         let mut config = HighlightConfiguration::new(
             language,
+            codeblock_lang,
             &highlights_query,
             &injection_query,
             &locals_query,
