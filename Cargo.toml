@@ -27,7 +27,7 @@ anyhow = "1"
 html-escape = "0.2.13"
 map-macro = "0.3.0"
 clap = { version = "4.5.21", default-features = false, features = ["std", "derive"], optional = true }
-mdbook = "0.4.28"
+mdbook = "0.4.42"
 serde = { version = "1.0.215", features = ["derive"] }
 serde_json = "1.0.133"
 pulldown-cmark = "0.12.2"
