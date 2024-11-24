@@ -16,7 +16,7 @@ const PREPROCESSOR: &str = "treesitter";
 
 impl Preprocessor for MdbookTreesitter {
     fn name(&self) -> &str {
-        "treesitter"
+        PREPROCESSOR
     }
 
     fn run(&self, ctx: &PreprocessorContext, mut book: Book) -> Result<Book> {
