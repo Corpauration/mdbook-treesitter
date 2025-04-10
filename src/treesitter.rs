@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use libloading::{Library, Symbol};
 use map_macro::hash_map;
 use regex::Regex;
