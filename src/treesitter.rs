@@ -47,12 +47,12 @@ impl MdbookTreesitterHighlighter {
         library_path.set_extension("so");
 
         let library = unsafe { Library::new(&library_path) }
-            .with_context(|| format!("Error opening dynamic library {:?}", library_path))?;
+            .with_context(|| format!("Error opening dynamic library {library_path:?}"))?;
         let language_fn_name = format!("tree_sitter_{}", name.replace('-', "_"));
         let language = unsafe {
             let language_fn: Symbol<unsafe extern "C" fn() -> Language> = library
                 .get(language_fn_name.as_bytes())
-                .with_context(|| format!("Failed to load symbol {}", language_fn_name))?;
+                .with_context(|| format!("Failed to load symbol {language_fn_name}"))?;
             language_fn()
         };
         std::mem::forget(library);
@@ -196,7 +196,7 @@ impl MdbookTreesitterHighlighter {
                         "no highlightjs match found for highlight `{}`",
                         highlight
                     ))?;
-                    result.push_str(&format!("<span class='{}'>", name));
+                    result.push_str(&format!("<span class='{name}'>"));
                 }
                 HighlightEvent::HighlightEnd => {
                     result.push_str("</span>");

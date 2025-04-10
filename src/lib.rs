@@ -133,7 +133,7 @@ impl MdbookTreesitter {
         for (span, block) in code_blocks.iter().rev() {
             let pre_content = &content[..span.start];
             let post_content = &content[span.end..];
-            content = format!("{}\n{}{}", pre_content, block, post_content);
+            content = format!("{pre_content}\n{block}{post_content}");
         }
         Ok(content)
     }
