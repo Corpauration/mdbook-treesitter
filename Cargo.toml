@@ -38,3 +38,8 @@ default = ["cli"]
 
 # Enable the command line binary
 cli = ["dep:clap", "dep:env_logger"]
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
