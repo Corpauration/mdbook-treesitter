@@ -3,10 +3,10 @@ mod treesitter;
 use crate::treesitter::MdbookTreesitterHighlighter;
 use anyhow::anyhow;
 use log::{debug, error};
+use mdbook::BookItem;
 use mdbook::book::Book;
 use mdbook::errors::Result;
 use mdbook::preprocess::{Preprocessor, PreprocessorContext};
-use mdbook::BookItem;
 use pulldown_cmark::CodeBlockKind::Fenced;
 use pulldown_cmark::{Event, Options, Parser, Tag};
 use std::process::exit;
@@ -133,7 +133,7 @@ impl MdbookTreesitter {
         for (span, block) in code_blocks.iter().rev() {
             let pre_content = &content[..span.start];
             let post_content = &content[span.end..];
-            content = format!("{}\n{}{}", pre_content, block, post_content);
+            content = format!("{pre_content}\n{block}{post_content}");
         }
         Ok(content)
     }
