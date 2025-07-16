@@ -9,7 +9,7 @@ use mdbook::errors::Result;
 use mdbook::preprocess::{Preprocessor, PreprocessorContext};
 use pulldown_cmark::CodeBlockKind::Fenced;
 use pulldown_cmark::{CowStr, Event, Options, Parser, Tag};
-use pulldown_cmark_to_cmark::{cmark_resume, CodeBlockKind};
+use pulldown_cmark_to_cmark::{CodeBlockKind, cmark_resume};
 use std::borrow::Cow;
 use std::process::exit;
 
@@ -128,17 +128,11 @@ impl MdbookTreesitter {
             // if let Some(CodeBlockKind::Fenced) = state.code_block {}
             // state.
         }
-<<<<<<< Updated upstream
-
         let mut content = content.to_string();
         for (span, block) in code_blocks.iter().rev() {
             let pre_content = &content[..span.start];
             let post_content = &content[span.end..];
             content = format!("{pre_content}\n{block}{post_content}");
-=======
-        if let Some(state) = state {
-            state.finalize(&mut buf)?;
->>>>>>> Stashed changes
         }
         // for (e, span) in events.into_offset_iter() {
         //     let Event::Start(Tag::CodeBlock(Fenced(info_string))) = e else {
