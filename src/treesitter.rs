@@ -183,6 +183,7 @@ impl MdbookTreesitterHighlighter {
                 HighlightEvent::Source { start, end } => {
                     let code_span =
                         html_escape::encode_text(s.get(start..end).unwrap()).to_string();
+                    // dbg!(&code_span);
                     result.push_str(&code_span);
                 }
                 HighlightEvent::HighlightStart(s) => {
@@ -204,7 +205,8 @@ impl MdbookTreesitterHighlighter {
             }
         }
         result.push_str("\n```");
-
+        // let res = result.replace("\\n", "\n");
+        // eprintln!("{}", &res);
         Ok(result)
     }
 }
