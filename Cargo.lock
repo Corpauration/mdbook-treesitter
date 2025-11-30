@@ -387,7 +387,6 @@ dependencies = [
  "mdbook-markdown",
  "mdbook-preprocessor",
  "regex",
- "serde",
  "serde_json",
  "tree-sitter",
  "tree-sitter-highlight",
