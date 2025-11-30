@@ -24,8 +24,8 @@ impl Preprocessor for MdbookTreesitter {
 
     fn run(&self, ctx: &PreprocessorContext, mut book: Book) -> Result<Book> {
         book.for_each_mut(|item: &mut BookItem| {
-            if let BookItem::Chapter(ref mut chapter) = *item {
-                if Self::preprocess(ctx, &chapter.content)
+            if let BookItem::Chapter(ref mut chapter) = *item
+                && Self::preprocess(ctx, &chapter.content)
                     .map(|md| {
                         chapter.content = md;
                     })
@@ -34,7 +34,6 @@ impl Preprocessor for MdbookTreesitter {
                 {
                     exit(1);
                 }
-            }
         });
 
         Ok(book)
