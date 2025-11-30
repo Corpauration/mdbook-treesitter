@@ -17,9 +17,8 @@ name = "mdbook_treesitter"
 path = "src/lib.rs"
 
 [dependencies]
-log = "0.4.28"
-env_logger = { version = "0.11.8", optional = true }
-chrono = { version = "0.4.42", default-features = false, features = ["clock"] }
+tracing = { version = "0.1.43", default-features = false, features = ["std"] }
+tracing-subscriber = { version = "0.3.22", default-features = false, features = ["std", "fmt", "ansi", "env-filter"], optional = true }
 tree-sitter = "0.25.10"
 tree-sitter-highlight = "0.25.10"
 libloading = "0.9.0"
@@ -36,4 +35,4 @@ regex = "1.12.2"
 default = ["cli"]
 
 # Enable the command line binary
-cli = ["dep:clap", "dep:env_logger"]
+cli = ["dep:clap", "dep:tracing-subscriber"]

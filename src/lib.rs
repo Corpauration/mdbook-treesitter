@@ -2,7 +2,6 @@ mod treesitter;
 
 use crate::treesitter::MdbookTreesitterHighlighter;
 use anyhow::anyhow;
-use log::{debug, error};
 use mdbook_markdown::pulldown_cmark::CodeBlockKind::Fenced;
 use mdbook_markdown::pulldown_cmark::{Event, Options, Parser, Tag};
 use mdbook_preprocessor::{
@@ -11,6 +10,7 @@ use mdbook_preprocessor::{
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::process::exit;
+use tracing::{debug, error};
 
 pub struct MdbookTreesitter;
 
@@ -31,9 +31,9 @@ impl Preprocessor for MdbookTreesitter {
                     })
                     .map_err(|err| error!("Failed to preprocess chapter: {err}"))
                     .is_err()
-                {
-                    exit(1);
-                }
+            {
+                exit(1);
+            }
         });
 
         Ok(book)
