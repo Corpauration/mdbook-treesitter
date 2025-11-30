@@ -1,11 +1,7 @@
 use anyhow::Result;
-use chrono::Local;
 use clap::{Parser, Subcommand};
-use env_logger::Builder;
-use log::LevelFilter;
 use mdbook_preprocessor::{Preprocessor, errors::Error};
 use mdbook_treesitter::MdbookTreesitter;
-use std::io::Write;
 use std::{io, process};
 
 #[derive(Parser)]
@@ -75,23 +71,13 @@ fn handle_supports(renderer: String) -> ! {
 }
 
 fn init_logger() {
-    let mut builder = Builder::new();
+    let filter = tracing_subscriber::EnvFilter::builder()
+        .with_default_directive(tracing::Level::INFO.into())
+        .from_env_lossy();
 
-    builder.format(|formatter, record| {
-        writeln!(
-            formatter,
-            "{} [{}] ({}): {}",
-            Local::now().format("%Y-%m-%d %H:%M:%S"),
-            record.level(),
-            record.target(),
-            record.args()
-        )
-    });
-
-    match std::env::var("RUST_LOG") {
-        Ok(var) => builder.parse_filters(&var),
-        Err(_) => builder.filter(None, LevelFilter::Info),
-    };
-
-    builder.init();
+    tracing_subscriber::fmt()
+        .with_env_filter(filter)
+        .without_time()
+        .with_writer(io::stderr)
+        .init();
 }
