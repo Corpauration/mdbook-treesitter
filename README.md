@@ -17,21 +17,9 @@ cargo install mdbook-treesitter
 Add this in your `book.toml`:
 
 ```toml
-[output.html]
-additional-js = ["treesitter.js"]
-
 [preprocessor.treesitter]
 command = "mdbook-treesitter"
 languages = ["javascript"]
-```
-
-Add this javascript in the file `treesitter.js` at the root of your project:
-
-```javascript
-let t = document.getElementsByClassName("language-treesitter");
-for (let i = 0; i < t.length; i++) {
-  t[i].innerHTML = t[i].innerText;
-}
 ```
 
 ## Usage
@@ -57,7 +45,6 @@ Example for javascript:
 ```
 - My awesome mdBook/
     - book.toml
-    - treesitter.js
     - book/
     - src/
     - treesitter/

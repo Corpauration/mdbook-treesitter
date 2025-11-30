@@ -176,7 +176,7 @@ impl MdbookTreesitterHighlighter {
             .highlighter
             .highlight(&self.config, s.as_bytes(), None, |_| None)?;
 
-        let mut result = "```treesitter\n".to_string();
+        let mut result = "<pre><code class=\"hljs\">".to_string();
 
         for event in highlights {
             match event? {
@@ -203,7 +203,7 @@ impl MdbookTreesitterHighlighter {
                 }
             }
         }
-        result.push_str("\n```");
+        result.push_str("\n</code></pre>");
 
         Ok(result)
     }
