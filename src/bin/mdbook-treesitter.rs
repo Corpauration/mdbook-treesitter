@@ -3,10 +3,7 @@ use chrono::Local;
 use clap::{Parser, Subcommand};
 use env_logger::Builder;
 use log::LevelFilter;
-use mdbook::{
-    errors::Error,
-    preprocess::{CmdPreprocessor, Preprocessor},
-};
+use mdbook_preprocessor::{Preprocessor, errors::Error};
 use mdbook_treesitter::MdbookTreesitter;
 use std::io::Write;
 use std::{io, process};
@@ -47,13 +44,13 @@ fn run(cli: Cli) -> Result<()> {
 }
 
 fn handle_preprocessing() -> Result<(), Error> {
-    let (ctx, book) = CmdPreprocessor::parse_input(io::stdin())?;
+    let (ctx, book) = mdbook_preprocessor::parse_input(io::stdin())?;
 
-    if ctx.mdbook_version != mdbook::MDBOOK_VERSION {
+    if ctx.mdbook_version != mdbook_preprocessor::MDBOOK_VERSION {
         eprintln!(
             "Warning: The mdbook-treesitter preprocessor was built against version \
              {} of mdbook, but we're being called from version {}",
-            mdbook::MDBOOK_VERSION,
+            mdbook_preprocessor::MDBOOK_VERSION,
             ctx.mdbook_version
         );
     }
@@ -68,7 +65,9 @@ fn handle_supports(renderer: String) -> ! {
     let supported = MdbookTreesitter.supports_renderer(&renderer);
 
     // Signal whether the renderer is supported by exiting with 1 or 0.
-    if supported {
+    if let Ok(supported) = supported
+        && supported
+    {
         process::exit(0);
     } else {
         process::exit(1);

@@ -48,6 +48,7 @@ Wait, you need to add related tree-sitter files:
 
 - Create a folder `treesitter` in the root of your mdBook project
 - Then, add your `language_name.so` in the created folder
+  - Note: This also works on Windows systems, copy the tree-sitter `parser.dll` as `language_name.so`, even if it is not a `*.so` file.
 - Next, create a folder `language_name` in the `tree-sitter` folder
 - Finally, add in it your scm files
 
