@@ -1,9 +1,10 @@
 [package]
 name = "mdbook-treesitter"
+version = "1.1.0"
 description = "mdbook-treesitter is an mdBook preprocessor for html adding tree-sitter highlighting support."
 homepage = "https://github.com/Corpauration/mdbook-treesitter"
 repository = "https://github.com/Corpauration/mdbook-treesitter"
-version = "1.0.0"
+keywords = ["mdbook", "tree-sitter"]
 edition = "2024"
 license = "MIT"
 
