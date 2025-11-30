@@ -3,12 +3,13 @@ mod treesitter;
 use crate::treesitter::MdbookTreesitterHighlighter;
 use anyhow::anyhow;
 use log::{debug, error};
-use mdbook::BookItem;
-use mdbook::book::Book;
-use mdbook::errors::Result;
-use mdbook::preprocess::{Preprocessor, PreprocessorContext};
-use pulldown_cmark::CodeBlockKind::Fenced;
-use pulldown_cmark::{Event, Options, Parser, Tag};
+use mdbook_markdown::pulldown_cmark::CodeBlockKind::Fenced;
+use mdbook_markdown::pulldown_cmark::{Event, Options, Parser, Tag};
+use mdbook_preprocessor::{
+    Preprocessor, PreprocessorContext, book::Book, book::BookItem, errors::Result,
+};
+use serde_json::Value;
+use std::collections::BTreeMap;
 use std::process::exit;
 
 pub struct MdbookTreesitter;
@@ -39,8 +40,8 @@ impl Preprocessor for MdbookTreesitter {
         Ok(book)
     }
 
-    fn supports_renderer(&self, renderer: &str) -> bool {
-        renderer == "html"
+    fn supports_renderer(&self, renderer: &str) -> Result<bool> {
+        Ok(renderer == "html")
     }
 }
 
@@ -59,28 +60,28 @@ fn extract_code_body(content: &str) -> &str {
 }
 
 impl MdbookTreesitter {
-    fn get_ts_languages(ctx: &PreprocessorContext) -> Result<Vec<&str>> {
-        let languages = ctx
-            .config
-            .get_preprocessor(PREPROCESSOR)
-            .and_then(|t| t.get("languages"))
-            .ok_or_else(|| {
-                anyhow!(
-                    "preprocessor.{PREPROCESSOR}.languages is missing from the project 'book.toml'"
-                )
-            })?;
+    fn get_ts_languages(ctx: &PreprocessorContext) -> Result<Vec<String>> {
+        let preprocessors: BTreeMap<String, Value> =
+            ctx.config.preprocessors().map_err(anyhow::Error::msg)?;
+
+        let preprocessor = preprocessors.get(PREPROCESSOR).ok_or(anyhow!(
+            "preprocessor.{PREPROCESSOR} is missing from the project 'book.toml'"
+        ))?;
+        let languages = preprocessor.get("languages").ok_or(anyhow!(
+            "preprocessor.{PREPROCESSOR}.languages is missing from the project 'book.toml'"
+        ))?;
 
         let ty_err = || anyhow!("preprocessor.{PREPROCESSOR}.languages must be a list of strings");
         let languages: Result<Vec<_>> = languages
             .as_array()
             .ok_or(ty_err())?
             .iter()
-            .map(|v| v.as_str().ok_or(ty_err()))
+            .map(|v| v.as_str().map(|s| s.to_string()).ok_or(ty_err()))
             .collect();
         languages
     }
     fn parse_code(
-        cfg_languages: &[&str],
+        cfg_languages: &[String],
         info_string: String,
         content: &str,
     ) -> Option<Result<String>> {
@@ -90,7 +91,7 @@ impl MdbookTreesitter {
         // command = "mdbook-treesitter"
         // languages = [ "lang" ]
         // ```
-        if !cfg_languages.contains(&info_string.as_str()) {
+        if !cfg_languages.contains(&info_string) {
             return None;
         }
 
