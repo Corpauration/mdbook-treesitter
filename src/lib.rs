@@ -1,18 +1,16 @@
+use std::{borrow::Cow, collections::BTreeMap, mem};
+
+use anyhow::Context;
+use mdbook_markdown::pulldown_cmark::{CodeBlockKind::Fenced, Event, Parser, Tag, TagEnd};
+use mdbook_preprocessor::{Preprocessor, PreprocessorContext, book::Book};
+use serde_json::Value;
+use tree_sitter_highlight::HighlightConfiguration;
+
 mod treesitter;
 
-use crate::treesitter::MdbookTreesitterHighlighter;
-use anyhow::anyhow;
-use mdbook_markdown::pulldown_cmark::CodeBlockKind::Fenced;
-use mdbook_markdown::pulldown_cmark::{Event, Options, Parser, Tag};
-use mdbook_preprocessor::{
-    Preprocessor, PreprocessorContext, book::Book, book::BookItem, errors::Result,
-};
-use serde_json::Value;
-use std::collections::BTreeMap;
-use std::process::exit;
-use tracing::{debug, error};
-
-pub struct MdbookTreesitter;
+#[derive(Default)]
+#[non_exhaustive]
+pub struct MdbookTreesitter {}
 
 // Name used by `mdbook` to look for the treesitter preprocessor
 const PREPROCESSOR: &str = "treesitter";
@@ -22,119 +20,109 @@ impl Preprocessor for MdbookTreesitter {
         PREPROCESSOR
     }
 
-    fn run(&self, ctx: &PreprocessorContext, mut book: Book) -> Result<Book> {
-        book.for_each_mut(|item: &mut BookItem| {
-            if let BookItem::Chapter(ref mut chapter) = *item
-                && Self::preprocess(ctx, &chapter.content)
-                    .map(|md| {
-                        chapter.content = md;
-                    })
-                    .map_err(|err| error!("Failed to preprocess chapter: {err}"))
-                    .is_err()
-            {
-                exit(1);
-            }
+    fn run(
+        &self,
+        ctx: &PreprocessorContext,
+        mut book: Book,
+    ) -> mdbook_preprocessor::errors::Result<Book> {
+        let languages = read_languages_to_handle(ctx).context("could not read config")?;
+        let highlighters =
+            load_highlighters(&languages).context("could not load all highlighters")?;
+
+        book.for_each_chapter_mut(|chapter| {
+            preprocess(&mut chapter.content, &highlighters)
+                .with_context(|| anyhow::anyhow!("failed to preprocess chapter"))
+                .unwrap();
         });
 
         Ok(book)
     }
 
-    fn supports_renderer(&self, renderer: &str) -> Result<bool> {
+    fn supports_renderer(&self, renderer: &str) -> mdbook_preprocessor::errors::Result<bool> {
         Ok(renderer == "html")
     }
 }
 
-fn extract_code_body(content: &str) -> &str {
-    const PRE_END: char = '\n';
-    const POST: &str = "```";
+fn preprocess(
+    content: &mut String,
+    highlight_configs: &BTreeMap<String, HighlightConfiguration>,
+) -> anyhow::Result<()> {
+    let mut processed_output = String::new();
+    let mut last_match = 0;
 
-    let start_index = content
-        .find(PRE_END)
-        .map(|index| index + 1)
-        .unwrap_or_default();
-    let end_index = content.len() - POST.len();
+    let mut current_highlight_config = None;
+    let mut codeblock_content = Cow::<str>::default();
 
-    let body = &content[start_index..end_index];
-    body.trim()
+    for (event, span) in Parser::new(content).into_offset_iter() {
+        match event {
+            Event::Start(Tag::CodeBlock(Fenced(language))) => {
+                let Some(highlight_config) = highlight_configs.get(language.as_ref()) else {
+                    // we ignore languages that were not registered
+                    continue;
+                };
+
+                current_highlight_config = Some(highlight_config);
+
+                processed_output.push_str(&content[last_match..span.start]);
+                last_match = span.end;
+            }
+            Event::Text(str) if current_highlight_config.is_some() => {
+                let mut next_content = codeblock_content.into_owned();
+                next_content.push_str(&str);
+                codeblock_content = Cow::Owned(next_content);
+            }
+            Event::End(TagEnd::CodeBlock) if current_highlight_config.is_some() => {
+                let highlight_config = current_highlight_config.take().unwrap();
+                let content = mem::take(&mut codeblock_content);
+
+                let html = treesitter::highlight_to_html(highlight_config, &content)?;
+                processed_output.push_str(&html);
+            }
+            _ => {}
+        }
+    }
+
+    // only replace with copied content if a codeblock was highlighted
+    if last_match != 0 {
+        processed_output.push_str(&content[last_match..]);
+        *content = processed_output;
+    }
+
+    Ok(())
 }
 
-impl MdbookTreesitter {
-    fn get_ts_languages(ctx: &PreprocessorContext) -> Result<Vec<String>> {
-        let preprocessors: BTreeMap<String, Value> =
-            ctx.config.preprocessors().map_err(anyhow::Error::msg)?;
+fn read_languages_to_handle(ctx: &PreprocessorContext) -> anyhow::Result<Vec<String>> {
+    let preprocessors = ctx.config.preprocessors::<Value>()?;
+    let Some(preprocessor) = preprocessors.get(PREPROCESSOR) else {
+        anyhow::bail!("`preprocessor.{PREPROCESSOR}` is missing from the project 'book.toml'")
+    };
+    let Some(languages) = preprocessor.get("languages") else {
+        anyhow::bail!(
+            "`preprocessor.{PREPROCESSOR}.languages` is missing from the project 'book.toml'"
+        )
+    };
 
-        let preprocessor = preprocessors.get(PREPROCESSOR).ok_or(anyhow!(
-            "preprocessor.{PREPROCESSOR} is missing from the project 'book.toml'"
-        ))?;
-        let languages = preprocessor.get("languages").ok_or(anyhow!(
-            "preprocessor.{PREPROCESSOR}.languages is missing from the project 'book.toml'"
-        ))?;
-
-        let ty_err = || anyhow!("preprocessor.{PREPROCESSOR}.languages must be a list of strings");
-        let languages: Result<Vec<_>> = languages
-            .as_array()
-            .ok_or(ty_err())?
+    if let Value::Array(languages) = languages
+        && let Some(languages) = languages
             .iter()
-            .map(|v| v.as_str().map(|s| s.to_string()).ok_or(ty_err()))
-            .collect();
-        languages
+            .map(|v| v.as_str().map(ToOwned::to_owned))
+            .collect::<Option<Vec<_>>>()
+    {
+        Ok(languages)
+    } else {
+        anyhow::bail!("`preprocessor.{PREPROCESSOR}.languages` must be a list of strings")
     }
-    fn parse_code(
-        cfg_languages: &[String],
-        info_string: String,
-        content: &str,
-    ) -> Option<Result<String>> {
-        // "```lang" info string must be declared in `book.toml`:
-        // ```
-        // [preprocessor.treesitter]
-        // command = "mdbook-treesitter"
-        // languages = [ "lang" ]
-        // ```
-        if !cfg_languages.contains(&info_string) {
-            return None;
-        }
+}
 
-        debug!("Code block with `{info_string}` language detected");
+fn load_highlighters(
+    languages: &[String],
+) -> anyhow::Result<BTreeMap<String, HighlightConfiguration>> {
+    let mut highlighters = BTreeMap::default();
 
-        let mut highlighter = match MdbookTreesitterHighlighter::new(info_string.as_str()) {
-            Ok(h) => h?,
-            Err(e) => return Some(Err(e)),
-        };
-
-        let body = extract_code_body(content);
-        highlighter.html(body).into()
+    for language in languages {
+        let highlighter = treesitter::load_config_from_language(language)?;
+        highlighters.insert(language.clone(), highlighter);
     }
 
-    fn preprocess(ctx: &PreprocessorContext, content: &str) -> Result<String> {
-        let mut opts = Options::empty();
-        opts.insert(Options::ENABLE_TABLES);
-        opts.insert(Options::ENABLE_FOOTNOTES);
-        opts.insert(Options::ENABLE_STRIKETHROUGH);
-        opts.insert(Options::ENABLE_TASKLISTS);
-
-        let mut code_blocks = vec![];
-
-        let cfg_languages = Self::get_ts_languages(ctx)?;
-
-        let events = Parser::new_ext(content, opts);
-        for (e, span) in events.into_offset_iter() {
-            if let Event::Start(Tag::CodeBlock(Fenced(info_string))) = e.clone() {
-                let span_content = &content[span.start..span.end];
-                let html =
-                    match Self::parse_code(&cfg_languages, info_string.to_string(), span_content) {
-                        Some(html) => html,
-                        None => continue,
-                    }?;
-                code_blocks.push((span, html));
-            }
-        }
-
-        let mut content = content.to_string();
-        for (span, block) in code_blocks.iter().rev() {
-            let pre_content = &content[..span.start];
-            let post_content = &content[span.end..];
-            content = format!("{pre_content}\n{block}{post_content}");
-        }
-        Ok(content)
-    }
+    Ok(highlighters)
 }

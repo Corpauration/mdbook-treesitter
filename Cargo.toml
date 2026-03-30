@@ -1,16 +1,17 @@
 [package]
 name = "mdbook-treesitter"
 version = "1.1.0"
-description = "mdbook-treesitter is an mdBook preprocessor for html adding tree-sitter highlighting support."
+description = "mdBook preprocessor to add tree-sitter highlighting support"
 homepage = "https://github.com/Corpauration/mdbook-treesitter"
 repository = "https://github.com/Corpauration/mdbook-treesitter"
 keywords = ["mdbook", "tree-sitter"]
+categories = ["parsing"]
 edition = "2024"
 license = "MIT"
 
 [[bin]]
 name = "mdbook-treesitter"
-path = "src/bin/mdbook-treesitter.rs"
+path = "src/main.rs"
 required-features = ["cli"]
 
 [lib]
@@ -18,22 +19,29 @@ name = "mdbook_treesitter"
 path = "src/lib.rs"
 
 [dependencies]
-tracing = { version = "0.1.43", default-features = false, features = ["std"] }
-tracing-subscriber = { version = "0.3.22", default-features = false, features = ["std", "fmt", "ansi", "env-filter"], optional = true }
-tree-sitter = "0.25.10"
-tree-sitter-highlight = "0.25.10"
-libloading = "0.9.0"
-anyhow = "1.0.100"
-html-escape = "0.2.13"
-map-macro = "0.3.0"
-clap = { version = "4.5.53", default-features = false, features = ["std", "derive"], optional = true }
-mdbook-preprocessor = { version = "0.5.1", default-features = false }
-serde_json = "1.0.145"
-mdbook-markdown = "0.5.1"
-regex = "1.12.2"
+anyhow = "1"
+html-escape = "0.2"
+libloading = "0.9"
+mdbook-markdown = "0.5"
+mdbook-preprocessor = { version = "0.5", default-features = false }
+phf = { version = "0.13", features = ["macros"] }
+regex = "1"
+serde_json = "1"
+tree-sitter = "0.26"
+tree-sitter-highlight = "0.26"
 
 [features]
 default = ["cli"]
 
-# Enable the command line binary
-cli = ["dep:clap", "dep:tracing-subscriber"]
+cli = []
+
+[lints]
+[lints.rust]
+# we need to interact with tree-sitter
+unsafe_code = "allow"
+[lints.rustdoc]
+all = "warn"
+[lints.clippy]
+pedantic = { priority = -1, level = "warn" }
+nursery = { priority = -1, level = "warn" }
+# cargo = { priority = -1, level = "warn" }
